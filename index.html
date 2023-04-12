@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<script>
+var counter = 0
+var width = 0;
+var height = 0; 
+var screens = [];
+var selectedScreen = 0;
+var delay = 200;
+var quality = 40;
+
+
+function init(){
+	
+	var url = "/system";
+	
+	fetch(url)
+	.then(response => response.text())
+	.then(data => {
+		screens = JSON.parse(data);
+
+		var screenList = document.getElementById("screenList");
+		
+		for(var i = 0; i < screens.length; i++){
+			var newOption = document.createElement("option");
+			newOption.value = i;
+			newOption.text = screens[i].DeviceName;
+			if (screens[i].Primary) selectedScreen = i;
+			screenList.appendChild(newOption);		
+		}
+		
+		startStream();
+	});	
+}
+
+
+function setIndex(){
+	var screenList = document.getElementById("screenList");
+	selectedScreen = screenList.value;
+}
+
+function startStream(){
+
+	var image = document.getElementById("screen");
+
+	window.addEventListener("keydown", function(event) {
+		var s = ""
+		if (document.getElementById("ctrl").checked) s+= "^";
+		if (document.getElementById("alt").checked) s+= "%";
+		if (document.getElementById("shift").checked) s+= "+";
+		var url = `/keyboard?s=${encodeURIComponent(s)}&k=${encodeURIComponent(event.key)}`;  
+		fetch(url)
+			.then(response => response.text())
+			.then(data => console.log(data));	
+	});
+	
+	
+	image.onload = function()
+	{
+		width = image.naturalWidth;
+		height = image.naturalHeight;
+		setTimeout(() => {getScreen();}, delay)
+				
+	}
+
+
+	function doClick(event, btn){
+	  var img = document.getElementById("screen");
+	  var scaledWidth = img.clientWidth;
+	  var scaledHeight = img.clientHeight;
+	  var x = Math.floor(event.offsetX * (width / scaledWidth));
+	  var y = Math.floor(event.offsetY * (height / scaledHeight));
+	  var url = `/click?x=${x}&y=${y}&b=${btn}`;  
+      fetch(url)
+		.then(response => response.text())
+		.then(data => console.log(data));	  
+		
+	}
+
+	image.addEventListener("click", function(event) {
+		doClick(event, "l")
+	});	
+	
+	image.addEventListener("contextmenu", function(event) {
+		event.preventDefault();
+		doClick(event, "r"); 
+		return false;
+	});		
+	
+	var moving = false;
+	
+	image.addEventListener("mousemove", function(event) {
+	  // Get the mouse coordinates relative to the viewport
+	  if(!moving){
+		  var mouseX = event.clientX;
+		  var mouseY = event.clientY;
+		  var scaledWidth = image.clientWidth;
+		  var scaledHeight = image.clientHeight;
+
+		  // Get the image bounding rect
+		  var rect = image.getBoundingClientRect();
+
+		  // Calculate the mouse coordinates relative to the image
+		  var x = Math.floor((mouseX - rect.left) * (width / scaledWidth));
+		  var y = Math.floor((mouseY - rect.top) * (height / scaledHeight))
+		  		  
+		  var url = `/move?x=${x}&y=${y}`;  
+		  moving = true;
+		  fetch(url)
+			.then(response => response.text())
+			.then(data => moving=false);	
+
+
+	  }
+	});		
+	
+	
+	getScreen();
+.5
+}
+
+
+function getScreen(){
+	document.getElementById("screen").src = "/screen?q=" + quality + "&i=" + selectedScreen + "&counter=" + counter;	
+	counter++;
+}
+25
+
+function setQaulity(){
+	quality = document.getElementById("quality").value;
+}
+
+function setDelay(){
+	delay = parseInt(document.getElementById("delay").value);
+}
+
+
+
+</script>
+<head>
+<title>PowerShell Remote Desktop</title>
+</head>
+<body onload="init()">
+Screen: <select id="screenList" onchange="setIndex()"></select> 
+Quality: <input type="number" onchange="setQaulity()" value="50" 30
+id="quality" step="1" min="1" max="100"> 
+Delay: <input type="number" onchange="setDelay()" value="200" id="delay" step="50" min="0" max="1000"> 
+Ctrl: <input type=checkbox id="ctrl">  Alt: <input type=checkbox id="alt"> Shift: <input type=checkbox id="shift">
+<div style="width: 100%;">
+ <img id="screen" width="100%" height="100%" style="object-fit: cover;">
+</div>
+
+
+</body>
+</html>
