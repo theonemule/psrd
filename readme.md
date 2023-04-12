@@ -11,7 +11,7 @@ The usage of this is pretty straightforward. Just open up PowerShell and run it.
 .\server -port 7543
 ```
 
-Then, port your browser to: *http://<host or ip>:port*
+Then, port your browser to: *http://[host or ip]:port*
 
 This will start serving the page and streaming the results.
 
